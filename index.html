@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>インターリニアグロス ジェネレーター</title>
+    <style>
+        /* igt-styles.css の内容をここに統合 */
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 1em 0;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+        }
+
+        main {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        section {
+            margin-bottom: 2em;
+            padding: 1em;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.3em;
+        }
+
+       .input-group {
+            margin-bottom: 1em;
+        }
+
+       .input-group label {
+            display: block;
+            margin-bottom: 0.5em;
+            font-weight: bold;
+        }
+
+       .input-group input[type="text"],
+       .input-group textarea {
+            width: calc(100% - 22px); /* padding + border */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+
+       .input-group textarea {
+            resize: vertical;
+        }
+
+        button {
+            background-color: #5cb85c;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #4cae4c;
+        }
+
+        #copy-html-button {
+            background-color: #337ab7;
+            margin-top: 0.5em;
+        }
+
+        #copy-html-button:hover {
+            background-color: #286090;
+        }
+
+        #generated-html-code {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap; /* HTMLコードが見やすいように変更 */
+            word-break: break-all; /* 長い行も折り返す */
+            overflow-x: auto;
+            background-color: #f9f9f9;
+            margin-top: 0.5em;
+        }
+
+       .gloss-output-container {
+            padding: 1em;
+            border: 1px dashed #ccc;
+            min-height: 50px;
+            background-color: #fdfdfd;
+        }
+
+        /* --- 既存のグロス表示スタイル --- */
+       .igt-preamble {
+            margin-bottom: 0.5em;
+            display: flex;
+            align-items: baseline;
+            flex-wrap: wrap; /* 小画面対応 */
+        }
+
+       .igt-example-number {
+            font-weight: bold;
+            margin-right: 0.5em;
+            white-space: nowrap;
+        }
+
+       .igt-example-description {
+            font-style: normal;
+            color: #333;
+        }
+
+       .igt-flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1em;
+            margin-bottom: 1em;
+            align-items: flex-start;
+            padding: 0.5em;
+            border: 1px solid #eee;
+        }
+
+       .igt-word-stack {
+            display: flex;
+            flex-direction: column;
+            padding: 0.2em;
+            border: 1px dotted #ccc;
+            background-color: #f9f9f9;
+            min-width: 50px; /* 単語スタックの最小幅 */
+        }
+
+       .igt-word-stack > div {
+            padding: 0.1em 0.2em;
+            text-align: left;
+            word-break: break-all; /* 長い単語がはみ出ないように改行 */
+        }
+
+       .source-lang-flex {
+            font-style: italic;
+            color: #333;
+        }
+
+       .gloss-abbr-flex {
+            font-variant: small-caps;
+            color: #555;
+        }
+
+       .free-translation-flex {
+            width: 100%;
+            flex-basis: 100%;
+            font-style: italic;
+            margin-top: 0.5em;
+            padding: 0.3em 0.2em;
+            border-top: 1px solid #ddd;
+            color: #444;
+        }
+
+       .igt-error-message {
+            color: red;
+            font-weight: bold;
+            margin-bottom: 0.5em;
+        }
+
+       .source-lang-fallback,
+       .gloss-abbr-fallback,
+       .free-translation-fallback {
+            padding: 0.2em 0.4em;
+            border-left: 3px solid #ffdddd;
+            margin-bottom: 0.3em;
+            background-color: #fff8f8;
+        }
+       .source-lang-fallback { font-style: italic; }
+       .gloss-abbr-fallback { font-variant: small-caps; }
+       .free-translation-fallback { font-style: italic; }
+
+        footer {
+            text-align: center;
+            padding: 1em 0;
+            margin-top: 2em;
+            background-color: #333;
+            color: #fff;
+        }
+
+        /* レスポンシブ対応 */
+        @media screen and (max-width: 600px) {
+         .igt-word-stack > div {
+                font-size: 0.9em;
+            }
+         .igt-flex-container {
+                gap: 0.5em;
+            }
+         .igt-preamble {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+         .igt-example-description {
+                margin-left: 0;
+                margin-top: 0.2em;
+            }
+            main {
+                margin: 10px;
+                padding: 10px;
+            }
+           .input-group input[type="text"],
+           .input-group textarea {
+                width: calc(100% - 20px); /* paddingを考慮 */
+            }
+            #generated-html-code {
+                 width: calc(100% - 20px); /* paddingを考慮 */
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>インターリニアグロス ジェネレーター</h1>
+    </header>
+
+    <main>
+        <section id="input-section">
+            <h2>グロスデータを入力してください</h2>
+            <div class="input-group">
+                <label for="input-num">例文番号 (任意):</label>
+                <input type="text" id="input-num" placeholder="(1a)">
+            </div>
+            <div class="input-group">
+                <label for="input-desc">例文説明 (任意):</label>
+                <input type="text" id="input-desc" placeholder="能動態の文。">
+            </div>
+            <div class="input-group">
+                <label for="input-src">原語行:</label>
+                <textarea id="input-src" rows="2" placeholder="Neko ga sakana o tabeta"></textarea>
+            </div>
+            <div class="input-group">
+                <label for="input-gl">グロス行:</label>
+                <textarea id="input-gl" rows="2" placeholder="cat NOM fish ACC eat.PST"></textarea>
+            </div>
+            <div class="input-group">
+                <label for="input-trans">翻訳行:</label>
+                <textarea id="input-trans" rows="2" placeholder="The cat ate the fish."></textarea>
+            </div>
+            <button id="generate-button">グロスを生成・表示</button>
+        </section>
+
+        <section id="display-section">
+            <h2>表示結果</h2>
+            <div id="live-gloss-output" class="gloss-output-container">
+                </div>
+        </section>
+
+        <section id="code-output-section">
+            <h2>生成されたHTMLコード</h2>
+            <textarea id="generated-html-code" readonly rows="10"></textarea>
+            <button id="copy-html-button">HTMLをコピー</button>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; インターリニアグロスツール 2024</p>
+    </footer>
+
+    <script>
+        // igt-app.js の内容をここに統合
+        document.addEventListener('DOMContentLoaded', () => {
+            const generateButton = document.getElementById('generate-button');
+            const copyHtmlButton = document.getElementById('copy-html-button');
+
+            const inputNum = document.getElementById('input-num');
+            const inputDesc = document.getElementById('input-desc');
+            const inputSrc = document.getElementById('input-src');
+            const inputGl = document.getElementById('input-gl');
+            const inputTrans = document.getElementById('input-trans');
+
+            const liveGlossOutput = document.getElementById('live-gloss-output');
+            const generatedHtmlCode = document.getElementById('generated-html-code');
+
+            generateButton.addEventListener('click', () => {
+                const num = inputNum.value.trim();
+                const desc = inputDesc.value.trim();
+                const src = inputSrc.value.trim();
+                const gl = inputGl.value.trim();
+                const trans = inputTrans.value.trim();
+
+                liveGlossOutput.innerHTML = '';
+                generatedHtmlCode.value = '';
+
+                if (!src ||!gl ||!trans) {
+                    liveGlossOutput.innerHTML = '<p class="igt-error-message">原語行、グロス行、翻訳行は必須です。</p>';
+                    return;
+                }
+
+                renderGlossForDisplay(num, desc, src, gl, trans, liveGlossOutput);
+
+                let htmlToCopy = `<div class="gloss"`;
+                if (num) htmlToCopy += `\n     data-num="${escapeHtml(num)}"`;
+                if (desc) htmlToCopy += `\n     data-desc="${escapeHtml(desc)}"`;
+                htmlToCopy += `\n     data-src="${escapeHtml(src)}"`;
+                htmlToCopy += `\n     data-gl="${escapeHtml(gl)}"`;
+                htmlToCopy += `\n     data-trans="${escapeHtml(trans)}">`;
+                htmlToCopy += `\n    \n</div>`;
+                generatedHtmlCode.value = htmlToCopy;
+            });
+
+            copyHtmlButton.addEventListener('click', () => {
+                const textToCopy = generatedHtmlCode.value;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        copyHtmlButton.textContent = 'コピーしました!';
+                        setTimeout(() => {
+                            copyHtmlButton.textContent = 'HTMLをコピー';
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('クリップボードへのコピーに失敗しました: ', err);
+                        alert('コピーに失敗しました。');
+                    });
+                } else {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = textToCopy;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-9999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        copyHtmlButton.textContent = 'コピーしました!';
+                        setTimeout(() => {
+                            copyHtmlButton.textContent = 'HTMLをコピー';
+                        }, 2000);
+                    } catch (err) {
+                        console.error('フォールバックコピーに失敗しました: ', err);
+                        alert('コピーに失敗しました。');
+                    }
+                    document.body.removeChild(textArea);
+                }
+            });
+        });
+
+        function renderGlossForDisplay(num, desc, src, gl, trans, displayContainer) {
+            const preambleDiv = document.createElement('div');
+            preambleDiv.className = 'igt-preamble';
+            let preambleAdded = false;
+
+            if (num) {
+                const numSpan = document.createElement('span');
+                numSpan.className = 'igt-example-number';
+                numSpan.textContent = num;
+                preambleDiv.appendChild(numSpan);
+                preambleAdded = true;
+            }
+
+            if (desc) {
+                const descSpan = document.createElement('span');
+                descSpan.className = 'igt-example-description';
+                descSpan.textContent = desc;
+                if (num) {
+                    descSpan.style.marginLeft = '0.5em';
+                }
+                preambleDiv.appendChild(descSpan);
+                preambleAdded = true;
+            }
+
+            if (preambleAdded) {
+                displayContainer.appendChild(preambleDiv);
+            }
+
+            igtContentRenderingLogic(src, gl, trans, displayContainer);
+        }
+
+        function igtContentRenderingLogic(sourceLine, glossLine, translationLine, containerElement) {
+            const sourceTokens = sourceLine.split(' ');
+            const glossTokens = glossLine.split(' ');
+
+            if (sourceTokens.length!== glossTokens.length) {
+                console.error("原語行とグロス行のトークン数が一致しません:", { source: sourceLine, gloss: glossLine });
+                const errorP = document.createElement('p');
+                errorP.className = 'igt-error-message';
+                errorP.textContent = "エラー：原語行とグロス行の単語/形態素数が一致しません。";
+                containerElement.appendChild(errorP);
+
+                const plainSource = document.createElement('p');
+                plainSource.className = 'source-lang-fallback';
+                plainSource.textContent = `原語: ${sourceLine}`;
+                containerElement.appendChild(plainSource);
+
+                const plainGloss = document.createElement('p');
+                plainGloss.className = 'gloss-abbr-fallback';
+                plainGloss.textContent = `グロス: ${glossLine}`;
+                containerElement.appendChild(plainGloss);
+
+                const plainTranslation = document.createElement('p');
+                plainTranslation.className = 'free-translation-fallback';
+                plainTranslation.textContent = `翻訳: ${translationLine}`;
+                containerElement.appendChild(plainTranslation);
+                return;
+            }
+
+            const igtContainer = document.createElement('div');
+            igtContainer.className = 'igt-flex-container';
+
+            for (let i = 0; i < sourceTokens.length; i++) {
+                const wordStack = document.createElement('div');
+                wordStack.className = 'igt-word-stack';
+
+                const sourceDiv = document.createElement('div');
+                sourceDiv.className = 'source-lang-flex';
+                sourceDiv.textContent = sourceTokens[i];
+                wordStack.appendChild(sourceDiv);
+
+                const glossDiv = document.createElement('div');
+                glossDiv.className = 'gloss-abbr-flex';
+
+                const morphemes = glossTokens[i].split('-');
+                morphemes.forEach((morpheme, index) => {
+                    const morphemeSpan = document.createElement('span');
+                    morphemeSpan.textContent = morpheme;
+                    glossDiv.appendChild(morphemeSpan);
+                    if (index < morphemes.length - 1) {
+                        glossDiv.appendChild(document.createTextNode('-'));
+                    }
+                });
+                wordStack.appendChild(glossDiv);
+                igtContainer.appendChild(wordStack);
+            }
+
+            const translationDiv = document.createElement('div');
+            translationDiv.className = 'free-translation-flex';
+            translationDiv.textContent = translationLine;
+            igtContainer.appendChild(translationDiv);
+
+            containerElement.appendChild(igtContainer);
+        }
+
+        function escapeHtml(unsafe) {
+            if (typeof unsafe!== 'string') {
+                return '';
+            }
+            return unsafe
+               .replace(/&/g, "&amp;")
+               .replace(/</g, "&lt;")
+               .replace(/>/g, "&gt;")
+               .replace(/"/g, "&quot;")
+               .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
