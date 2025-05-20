@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>インターリニアグロス ジェネレーター</title>
     <style>
-        /* igt-styles.css の内容をここに統合 */
         body {
             font-family: sans-serif;
             line-height: 1.6;
@@ -48,18 +47,26 @@
             padding-bottom: 0.3em;
         }
 
-       .input-group {
+      .input-group,.options-group div {
             margin-bottom: 1em;
         }
 
-       .input-group label {
+      .input-group label,.options-group label {
             display: block;
             margin-bottom: 0.5em;
             font-weight: bold;
         }
 
-       .input-group input[type="text"],
-       .input-group textarea {
+      .options-group input[type="checkbox"] + label {
+            font-weight: normal;
+            display: inline-block;
+            margin-left: 0.3em;
+            margin-bottom: 0;
+       }
+
+
+      .input-group input[type="text"],
+      .input-group textarea {
             width: calc(100% - 22px); /* padding + border */
             padding: 10px;
             border: 1px solid #ccc;
@@ -67,7 +74,7 @@
             font-size: 1em;
         }
 
-       .input-group textarea {
+      .input-group textarea {
             resize: vertical;
         }
 
@@ -101,101 +108,112 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             font-family: monospace;
-            white-space: pre-wrap; /* HTMLコードが見やすいように変更 */
-            word-break: break-all; /* 長い行も折り返す */
+            white-space: pre-wrap;
+            word-break: break-all;
             overflow-x: auto;
             background-color: #f9f9f9;
             margin-top: 0.5em;
         }
 
-       .gloss-output-container {
+      .gloss-output-container {
             padding: 1em;
             border: 1px dashed #ccc;
             min-height: 50px;
             background-color: #fdfdfd;
         }
 
-        /* --- 既存のグロス表示スタイル --- */
-       .igt-preamble {
+        /* --- グロス表示スタイル --- */
+      .igt-preamble {
             margin-bottom: 0.5em;
             display: flex;
             align-items: baseline;
-            flex-wrap: wrap; /* 小画面対応 */
+            flex-wrap: wrap;
         }
 
-       .igt-example-number {
+      .igt-example-number {
             font-weight: bold;
             margin-right: 0.5em;
             white-space: nowrap;
         }
 
-       .igt-example-description {
+      .igt-example-description {
             font-style: normal;
             color: #333;
         }
 
-       .igt-flex-container {
+      .igt-flex-container {
             display: flex;
             flex-wrap: wrap;
             gap: 1em;
             margin-bottom: 1em;
             align-items: flex-start;
             padding: 0.5em;
-            border: 1px solid #eee;
+            /* 罫線は.igt-word-stack-bordered で制御 */
         }
 
-       .igt-word-stack {
+      .igt-word-stack {
             display: flex;
             flex-direction: column;
             padding: 0.2em;
-            border: 1px dotted #ccc;
             background-color: #f9f9f9;
-            min-width: 50px; /* 単語スタックの最小幅 */
+            min-width: 50px;
         }
+        /* 単語スタックの罫線（トグル用） */
+      .igt-word-stack-bordered.igt-word-stack {
+            border: 1px dotted #ccc;
+       }
+      .igt-flex-container.igt-bordered { /* グロス全体のコンテナ罫線（トグル用） */
+            border: 1px solid #eee;
+       }
 
-       .igt-word-stack > div {
+
+      .igt-word-stack > div {
             padding: 0.1em 0.2em;
             text-align: left;
-            word-break: break-all; /* 長い単語がはみ出ないように改行 */
+            word-break: break-all;
         }
 
-       .source-lang-flex {
-            font-style: italic;
+      .source-lang-flex {
             color: #333;
         }
+      .source-lang-flex.igt-source-italic { /* 原語イタリック（トグル用） */
+            font-style: italic;
+        }
 
-       .gloss-abbr-flex {
+      .gloss-abbr-flex {
             font-variant: small-caps;
             color: #555;
         }
 
-       .free-translation-flex {
+      .free-translation-flex {
             width: 100%;
             flex-basis: 100%;
-            font-style: italic;
             margin-top: 0.5em;
             padding: 0.3em 0.2em;
             border-top: 1px solid #ddd;
             color: #444;
         }
+      .free-translation-flex.igt-translation-italic { /* 翻訳イタリック（トグル用） */
+            font-style: italic;
+        }
 
-       .igt-error-message {
+      .igt-error-message {
             color: red;
             font-weight: bold;
             margin-bottom: 0.5em;
         }
 
-       .source-lang-fallback,
-       .gloss-abbr-fallback,
-       .free-translation-fallback {
+      .source-lang-fallback,
+      .gloss-abbr-fallback,
+      .free-translation-fallback {
             padding: 0.2em 0.4em;
             border-left: 3px solid #ffdddd;
             margin-bottom: 0.3em;
             background-color: #fff8f8;
         }
-       .source-lang-fallback { font-style: italic; }
-       .gloss-abbr-fallback { font-variant: small-caps; }
-       .free-translation-fallback { font-style: italic; }
+      .source-lang-fallback.igt-source-italic { font-style: italic; }
+      .gloss-abbr-fallback { font-variant: small-caps; }
+      .free-translation-fallback.igt-translation-italic { font-style: italic; }
 
         footer {
             text-align: center;
@@ -207,17 +225,17 @@
 
         /* レスポンシブ対応 */
         @media screen and (max-width: 600px) {
-         .igt-word-stack > div {
+        .igt-word-stack > div {
                 font-size: 0.9em;
             }
-         .igt-flex-container {
+        .igt-flex-container {
                 gap: 0.5em;
             }
-         .igt-preamble {
+        .igt-preamble {
                 flex-direction: column;
                 align-items: flex-start;
             }
-         .igt-example-description {
+        .igt-example-description {
                 margin-left: 0;
                 margin-top: 0.2em;
             }
@@ -225,12 +243,12 @@
                 margin: 10px;
                 padding: 10px;
             }
-           .input-group input[type="text"],
-           .input-group textarea {
-                width: calc(100% - 20px); /* paddingを考慮 */
+          .input-group input[type="text"],
+          .input-group textarea {
+                width: calc(100% - 20px);
             }
             #generated-html-code {
-                 width: calc(100% - 20px); /* paddingを考慮 */
+                 width: calc(100% - 20px);
             }
         }
     </style>
@@ -266,6 +284,20 @@
             <button id="generate-button">グロスを生成・表示</button>
         </section>
 
+        <section id="options-section">
+            <h2>表示オプション</h2>
+            <div class="options-group">
+                <div>
+                    <input type="checkbox" id="toggle-italics" checked>
+                    <label for="toggle-italics">原語行と翻訳行をイタリックにする</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="toggle-borders" checked>
+                    <label for="toggle-borders">単語ごとの罫線と全体の枠線を表示する</label>
+                </div>
+            </div>
+        </section>
+
         <section id="display-section">
             <h2>表示結果</h2>
             <div id="live-gloss-output" class="gloss-output-container">
@@ -284,7 +316,6 @@
     </footer>
 
     <script>
-        // igt-app.js の内容をここに統合
         document.addEventListener('DOMContentLoaded', () => {
             const generateButton = document.getElementById('generate-button');
             const copyHtmlButton = document.getElementById('copy-html-button');
@@ -297,6 +328,40 @@
 
             const liveGlossOutput = document.getElementById('live-gloss-output');
             const generatedHtmlCode = document.getElementById('generated-html-code');
+
+            const toggleItalicsCheckbox = document.getElementById('toggle-italics');
+            const toggleBordersCheckbox = document.getElementById('toggle-borders');
+
+            function applyDisplayOptions() {
+                const sourceElements = liveGlossOutput.querySelectorAll('.source-lang-flex,.source-lang-fallback');
+                const translationElements = liveGlossOutput.querySelectorAll('.free-translation-flex,.free-translation-fallback');
+                const igtContainer = liveGlossOutput.querySelector('.igt-flex-container');
+
+                sourceElements.forEach(el => {
+                    if (toggleItalicsCheckbox.checked) {
+                        el.classList.add('igt-source-italic');
+                    } else {
+                        el.classList.remove('igt-source-italic');
+                    }
+                });
+                translationElements.forEach(el => {
+                    if (toggleItalicsCheckbox.checked) {
+                        el.classList.add('igt-translation-italic');
+                    } else {
+                        el.classList.remove('igt-translation-italic');
+                    }
+                });
+
+                if (igtContainer) {
+                    if (toggleBordersCheckbox.checked) {
+                        igtContainer.classList.add('igt-word-stack-bordered');
+                        igtContainer.classList.add('igt-bordered');
+                    } else {
+                        igtContainer.classList.remove('igt-word-stack-bordered');
+                        igtContainer.classList.remove('igt-bordered');
+                    }
+                }
+            }
 
             generateButton.addEventListener('click', () => {
                 const num = inputNum.value.trim();
@@ -314,8 +379,10 @@
                 }
 
                 renderGlossForDisplay(num, desc, src, gl, trans, liveGlossOutput);
+                applyDisplayOptions(); // 表示オプションを適用
 
-                let htmlToCopy = `<div class="gloss"`;
+                let htmlToCopy = `\n`;
+                htmlToCopy += `<div class="gloss"`;
                 if (num) htmlToCopy += `\n     data-num="${escapeHtml(num)}"`;
                 if (desc) htmlToCopy += `\n     data-desc="${escapeHtml(desc)}"`;
                 htmlToCopy += `\n     data-src="${escapeHtml(src)}"`;
@@ -358,6 +425,12 @@
                     document.body.removeChild(textArea);
                 }
             });
+
+            toggleItalicsCheckbox.addEventListener('change', applyDisplayOptions);
+            toggleBordersCheckbox.addEventListener('change', applyDisplayOptions);
+
+            // 初期状態でオプションを適用（もしデフォルトで何か表示されていれば）
+            applyDisplayOptions();
         });
 
         function renderGlossForDisplay(num, desc, src, gl, trans, displayContainer) {
@@ -420,14 +493,14 @@
             }
 
             const igtContainer = document.createElement('div');
-            igtContainer.className = 'igt-flex-container';
+            igtContainer.className = 'igt-flex-container'; // 罫線とイタリックはここで動的に制御
 
             for (let i = 0; i < sourceTokens.length; i++) {
                 const wordStack = document.createElement('div');
                 wordStack.className = 'igt-word-stack';
 
                 const sourceDiv = document.createElement('div');
-                sourceDiv.className = 'source-lang-flex';
+                sourceDiv.className = 'source-lang-flex'; // イタリックはここで動的に制御
                 sourceDiv.textContent = sourceTokens[i];
                 wordStack.appendChild(sourceDiv);
 
@@ -448,7 +521,7 @@
             }
 
             const translationDiv = document.createElement('div');
-            translationDiv.className = 'free-translation-flex';
+            translationDiv.className = 'free-translation-flex'; // イタリックはここで動的に制御
             translationDiv.textContent = translationLine;
             igtContainer.appendChild(translationDiv);
 
@@ -460,11 +533,11 @@
                 return '';
             }
             return unsafe
-               .replace(/&/g, "&amp;")
-               .replace(/</g, "&lt;")
-               .replace(/>/g, "&gt;")
-               .replace(/"/g, "&quot;")
-               .replace(/'/g, "&#039;");
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;");
         }
     </script>
 </body>
