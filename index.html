@@ -3,339 +3,1790 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>インターリニアグロス ジェネレーター</title>
+    <title>Universal Interlinear Gloss Generator | ユニバーサル・インターリニアグロス・ジェネレーター</title>
+    <meta name="description" content="Academic-grade interlinear glossing tool with HTML, LaTeX, and TEI/XML support. Created by So Miyagawa.">
+    <meta property="og:title" content="Universal Interlinear Gloss Generator">
+    <meta property="og:description" content="Academic-grade interlinear glossing tool with HTML, LaTeX, and TEI/XML support">
+    <meta property="og:url" content="https://somiyagawa.com/gloss-generator">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:creator" content="@somiyagawa">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body {
-            font-family: sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            color: #333;
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+        
+        :root {
+            /* Dark theme (default) */
+            --primary-gradient: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            --secondary-gradient: linear-gradient(135deg, #ff006e 0%, #8338ec 100%);
+            --accent-gradient: linear-gradient(135deg, #06ffa5 0%, #0095ff 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            
+            --bg-dark: #0a0a0a;
+            --bg-card: rgba(17, 25, 40, 0.95);
+            --bg-glass: rgba(255, 255, 255, 0.1);
+            --bg-glass-hover: rgba(255, 255, 255, 0.15);
+            
+            --text-primary: #ffffff;
+            --text-secondary: #e2e8f0;
+            --text-muted: #94a3b8;
+            --text-accent: #06ffa5;
+            
+            --border-color: rgba(255, 255, 255, 0.2);
+            --border-focus: #06ffa5;
+            
+            --shadow-glow: 0 0 40px rgba(6, 255, 165, 0.3);
+            --shadow-card: 0 10px 40px rgba(0, 0, 0, 0.5);
+            
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --code-tag: #569cd6;
+            --code-attr: #9cdcfe;
+            --code-string: #ce9178;
+            --code-comment: #6a9955;
+            --code-keyword: #c586c0;
+            
+            --font-size-base: 18px;
+            --font-size-small: 16px;
+            --font-size-large: 20px;
+            --font-size-xlarge: 28px;
+            --font-size-xxlarge: 36px;
         }
 
+        /* Light theme */
+        body.light-mode {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            
+            --bg-dark: #f8f9fa;
+            --bg-card: rgba(255, 255, 255, 0.95);
+            --bg-glass: rgba(0, 0, 0, 0.05);
+            --bg-glass-hover: rgba(0, 0, 0, 0.08);
+            
+            --text-primary: #1a202c;
+            --text-secondary: #4a5568;
+            --text-muted: #718096;
+            --text-accent: #5b21b6;
+            
+            --border-color: rgba(0, 0, 0, 0.1);
+            --border-focus: #667eea;
+            
+            --shadow-glow: 0 0 40px rgba(102, 126, 234, 0.2);
+            --shadow-card: 0 10px 40px rgba(0, 0, 0, 0.1);
+            
+            --code-bg: #f5f5f5;
+            --code-text: #333333;
+            --code-tag: #0000ff;
+            --code-attr: #ff0000;
+            --code-string: #008000;
+            --code-comment: #008000;
+            --code-keyword: #0000ff;
+        }
+
+        /* Font configuration */
+        @font-face {
+            font-family: 'UD Digi Kyokasho';
+            font-style: normal;
+            font-weight: 400;
+            src: local('UD Digi Kyokasho NK-R'), local('UDDigiKyokasho-Regular');
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* Skip link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--accent-gradient);
+            color: var(--bg-dark);
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 0 0 8px 0;
+            font-weight: 700;
+            z-index: 1000;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans JP', sans-serif;
+            line-height: 1.7;
+            margin: 0;
+            padding: 0;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            font-size: var(--font-size-base);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Japanese text font */
+        :lang(ja) {
+            font-family: 'UD Digi Kyokasho', 'UDDigiKyokasho-Regular', 'Noto Sans JP', 'Yu Gothic', sans-serif;
+            font-weight: 500;
+        }
+
+        /* Theme toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .theme-toggle-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            gap: 10px;
+            padding: 5px 10px;
+        }
+
+        .theme-toggle-checkbox {
+            display: none;
+        }
+
+        .theme-toggle-switch {
+            width: 50px;
+            height: 26px;
+            background: var(--bg-glass);
+            border-radius: 50px;
+            position: relative;
+            transition: background 0.3s ease;
+            border: 2px solid var(--border-color);
+        }
+
+        .theme-toggle-switch::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            background: var(--text-accent);
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle-checkbox:checked + .theme-toggle-label .theme-toggle-switch::before {
+            transform: translateX(24px);
+        }
+
+        .theme-icon {
+            font-size: 20px;
+            color: var(--text-accent);
+        }
+
+        /* Social share buttons */
+        .social-share {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .social-share-button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .social-share-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .social-share-button:hover::before {
+            width: 100px;
+            height: 100px;
+        }
+
+        .social-share-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .social-share-button.twitter {
+            background: #1DA1F2;
+        }
+
+        .social-share-button.facebook {
+            background: #1877f2;
+        }
+
+        .social-share-button.instagram {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+        }
+
+        .social-share-button.linkedin {
+            background: #0077b5;
+        }
+
+        .social-share-button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Mobile social share */
+        @media (max-width: 768px) {
+            .social-share {
+                position: static;
+                transform: none;
+                flex-direction: row;
+                justify-content: center;
+                padding: 20px;
+                margin-top: 20px;
+            }
+
+            .theme-toggle {
+                position: fixed;
+                top: 10px;
+                right: 10px;
+            }
+        }
+
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            background: var(--bg-dark);
+            overflow: hidden;
+            transition: background 0.3s ease;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 50%, rgba(106, 17, 203, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 80%, rgba(255, 0, 110, 0.3) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 20%, rgba(6, 255, 165, 0.2) 0%, transparent 50%);
+            animation: bgRotate 30s linear infinite;
+            opacity: 0.5;
+            transition: opacity 0.3s ease;
+        }
+
+        body.light-mode .bg-animation::before {
+            opacity: 0.2;
+        }
+
+        @keyframes bgRotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Floating particles */
+        .particle {
+            position: absolute;
+            background: var(--text-accent);
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: float 20s infinite;
+        }
+
+        body.light-mode .particle {
+            opacity: 0.3;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.5;
+            }
+            90% {
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateY(-1000px) translateX(100px);
+                opacity: 0;
+            }
+        }
+
+        /* Header */
         header {
-            background-color: #333;
-            color: #fff;
-            padding: 1em 0;
+            background: linear-gradient(180deg, rgba(17, 25, 40, 0.95) 0%, rgba(17, 25, 40, 0.8) 100%);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid var(--border-color);
+            padding: 3em 0;
+            position: relative;
+            overflow: hidden;
+            animation: slideDown 0.8s ease-out;
+            transition: background 0.3s ease;
+        }
+
+        body.light-mode header {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.8) 100%);
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
             text-align: center;
         }
 
         header h1 {
             margin: 0;
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 900;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
+            line-height: 1.2;
+            animation: titleGlow 3s ease-in-out infinite;
         }
 
+        @keyframes titleGlow {
+            0%, 100% { 
+                filter: brightness(1) drop-shadow(0 0 20px rgba(106, 17, 203, 0.5));
+            }
+            50% { 
+                filter: brightness(1.2) drop-shadow(0 0 40px rgba(106, 17, 203, 0.8));
+            }
+        }
+
+        .header-subtitle {
+            font-size: clamp(1.2rem, 3vw, 2rem);
+            color: var(--text-accent);
+            margin-top: 0.5em;
+            font-weight: 700;
+            animation: fadeInUp 1s ease-out 0.3s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        header p {
+            margin: 1em 0 0;
+            color: var(--text-secondary);
+            font-size: var(--font-size-large);
+            animation: fadeInUp 1s ease-out 0.6s both;
+        }
+
+        /* Author section */
+        .author-section {
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2em;
+            margin: 2em auto;
+            max-width: 800px;
+            text-align: center;
+            border: 2px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 1s ease-out 0.9s both;
+            transition: all 0.3s ease;
+        }
+
+        .author-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--accent-gradient);
+            opacity: 0.05;
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.05; }
+            50% { opacity: 0.1; }
+        }
+
+        .author-info {
+            position: relative;
+            z-index: 1;
+        }
+
+        .author-info h3 {
+            margin: 0 0 0.5em 0;
+            color: var(--text-accent);
+            font-size: var(--font-size-small);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .author-name {
+            font-size: var(--font-size-xlarge);
+            font-weight: 700;
+            margin: 0.25em 0;
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .author-title {
+            font-size: var(--font-size-large);
+            color: var(--text-secondary);
+            margin: 0.5em 0;
+        }
+
+        .author-link {
+            display: inline-block;
+            margin-top: 1em;
+            padding: 0.75em 2em;
+            background: var(--accent-gradient);
+            color: var(--bg-dark);
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: var(--font-size-base);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body.light-mode .author-link {
+            color: white;
+        }
+
+        .author-link::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .author-link:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .author-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(6, 255, 165, 0.4);
+        }
+
+        .author-link span {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Main content */
         main {
-            max-width: 900px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #fff;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
         }
 
-        section {
-            margin-bottom: 2em;
-            padding: 1em;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 2px solid var(--border-color);
+            box-shadow: var(--shadow-card);
+            margin-bottom: 30px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.8s ease-out both;
         }
 
-        h2 {
-            margin-top: 0;
-            color: #333;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 0.3em;
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+        .card:nth-child(5) { animation-delay: 0.5s; }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--text-accent);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.6), var(--shadow-glow);
         }
 
-      .input-group,.options-group div {
-            margin-bottom: 1em;
+        body.light-mode .card:hover {
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15), var(--shadow-glow);
         }
 
-      .input-group label,.options-group label {
+        .card-header {
+            background: var(--bg-glass);
+            padding: 1.5em 2em;
+            border-bottom: 2px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--accent-gradient);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .card:hover .card-header::after {
+            transform: translateX(0);
+        }
+
+        .card-header h2 {
+            margin: 0;
+            font-size: var(--font-size-xlarge);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .card-body {
+            padding: 2em;
+        }
+
+        /* Form elements */
+        .input-group {
+            margin-bottom: 1.5em;
+            animation: fadeIn 0.5s ease-out both;
+        }
+
+        .input-group label {
             display: block;
             margin-bottom: 0.5em;
-            font-weight: bold;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: var(--font-size-base);
         }
 
-      .options-group input[type="checkbox"] + label {
-            font-weight: normal;
-            display: inline-block;
-            margin-left: 0.3em;
-            margin-bottom: 0;
-       }
-
-
-      .input-group input[type="text"],
-      .input-group textarea {
-            width: calc(100% - 22px); /* padding + border */
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1em;
+        .input-group label span[aria-label="required"] {
+            color: var(--text-accent);
+            font-weight: 700;
         }
 
-      .input-group textarea {
+        .input-group input[type="text"],
+        .input-group textarea {
+            width: 100%;
+            padding: 1em;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: var(--font-size-base);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        body.light-mode .input-group input[type="text"],
+        body.light-mode .input-group textarea {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .input-group input[type="text"]:hover,
+        .input-group textarea:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        body.light-mode .input-group input[type="text"]:hover,
+        body.light-mode .input-group textarea:hover {
+            background: rgba(0, 0, 0, 0.08);
+            border-color: rgba(0, 0, 0, 0.3);
+        }
+
+        .input-group input[type="text"]:focus,
+        .input-group textarea:focus {
+            outline: none;
+            border-color: var(--text-accent);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 0 4px rgba(6, 255, 165, 0.2);
+        }
+
+        body.light-mode .input-group input[type="text"]:focus,
+        body.light-mode .input-group textarea:focus {
+            background: rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+        }
+
+        .input-group textarea {
             resize: vertical;
+            min-height: 100px;
+        }
+
+        .input-help {
+            font-size: var(--font-size-small);
+            color: var(--text-muted);
+            margin-top: 0.5em;
+            font-style: italic;
+        }
+
+        /* Buttons */
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 2em;
         }
 
         button {
-            background-color: #5cb85c;
-            color: white;
-            padding: 10px 15px;
+            padding: 1em 2.5em;
             border: none;
-            border-radius: 4px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.3s ease;
+            font-size: var(--font-size-base);
+            font-weight: 700;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            min-height: 56px;
         }
 
-        button:hover {
-            background-color: #4cae4c;
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
         }
 
-        #copy-html-button {
-            background-color: #337ab7;
-            margin-top: 0.5em;
+        button:hover::before {
+            width: 400px;
+            height: 400px;
         }
 
-        #copy-html-button:hover {
-            background-color: #286090;
+        button:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
-        #generated-html-code {
-            width: calc(100% - 22px);
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-family: monospace;
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button.primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        button.success {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        button.secondary {
+            background: var(--secondary-gradient);
+            color: white;
+        }
+
+        .copy-button {
+            background: var(--accent-gradient);
+            color: var(--bg-dark);
+        }
+
+        body.light-mode .copy-button {
+            color: white;
+        }
+
+        /* Options */
+        .options-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 1em;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .option-item:hover {
+            transform: translateX(5px);
+        }
+
+        .option-item input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            margin-right: 0.75em;
+            cursor: pointer;
+            accent-color: var(--text-accent);
+        }
+
+        .option-item label {
+            cursor: pointer;
+            user-select: none;
+            color: var(--text-primary);
+            font-size: var(--font-size-base);
+            font-weight: 500;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 5px;
+        }
+
+        .tab {
+            padding: 0.75em 1.5em;
+            background: transparent;
+            border: 2px solid transparent;
+            border-radius: 12px 12px 0 0;
+            cursor: pointer;
+            font-size: var(--font-size-base);
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab::after {
+            content: '';
+            position: absolute;
+            bottom: -7px;
+            left: 50%;
+            width: 0;
+            height: 3px;
+            background: var(--accent-gradient);
+            transform: translateX(-50%);
+            transition: width 0.3s ease;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-glass);
+        }
+
+        .tab.active {
+            color: var(--text-accent);
+            background: var(--bg-glass);
+            border-color: var(--border-color);
+        }
+
+        .tab.active::after {
+            width: 100%;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Code output with syntax highlighting */
+        .code-output {
+            width: 100%;
+            min-height: 300px;
+            padding: 1.5em;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: var(--font-size-small);
+            line-height: 1.6;
             white-space: pre-wrap;
             word-break: break-all;
             overflow-x: auto;
-            background-color: #f9f9f9;
-            margin-top: 0.5em;
+            background: var(--code-bg);
+            color: var(--code-text);
+            margin-bottom: 1em;
+            resize: vertical;
+            position: relative;
         }
 
-      .gloss-output-container {
-            padding: 1em;
-            border: 1px dashed #ccc;
-            min-height: 50px;
-            background-color: #fdfdfd;
+        .code-output::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
         }
 
-        /* --- グロス表示スタイル --- */
-      .igt-preamble {
-            margin-bottom: 0.5em;
+        .code-output::-webkit-scrollbar-track {
+            background: var(--bg-glass);
+        }
+
+        .code-output::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 6px;
+        }
+
+        /* Syntax highlighting colors */
+        .code-tag { color: var(--code-tag); }
+        .code-attr { color: var(--code-attr); }
+        .code-string { color: var(--code-string); }
+        .code-comment { color: var(--code-comment); }
+        .code-keyword { color: var(--code-keyword); }
+        .code-number { color: #b5cea8; }
+
+        /* Gloss output */
+        .gloss-output-container {
+            padding: 2.5em;
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            min-height: 150px;
+            background: linear-gradient(135deg, rgba(106, 17, 203, 0.1) 0%, rgba(6, 255, 165, 0.1) 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        body.light-mode .gloss-output-container {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(79, 172, 254, 0.1) 100%);
+        }
+
+        .gloss-output-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(6, 255, 165, 0.1) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        body.light-mode .gloss-output-container::before {
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Gloss Display Styles */
+        .igt-container {
+            margin: 1em 0;
+            position: relative;
+            z-index: 1;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .igt-preamble {
+            margin-bottom: 1.5em;
             display: flex;
             align-items: baseline;
             flex-wrap: wrap;
+            gap: 1em;
         }
 
-      .igt-example-number {
-            font-weight: bold;
-            margin-right: 0.5em;
-            white-space: nowrap;
+        .igt-example-number {
+            font-weight: 900;
+            color: var(--text-accent);
+            font-size: var(--font-size-xlarge);
+            text-shadow: 0 0 20px rgba(6, 255, 165, 0.5);
         }
 
-      .igt-example-description {
+        body.light-mode .igt-example-number {
+            text-shadow: 0 0 20px rgba(91, 33, 182, 0.3);
+        }
+
+        .igt-example-description {
             font-style: normal;
-            color: #333;
+            color: var(--text-secondary);
+            font-size: var(--font-size-large);
         }
 
-      .igt-flex-container {
+        .igt-flex-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 1em;
-            margin-bottom: 1em;
+            gap: 1.5em;
+            margin-bottom: 1.5em;
             align-items: flex-start;
-            padding: 0.5em;
-            /* 罫線は.igt-word-stack-bordered で制御 */
+            padding: 1em 0;
         }
 
-      .igt-word-stack {
+        .igt-word-stack {
             display: flex;
             flex-direction: column;
-            padding: 0.2em;
-            background-color: #f9f9f9;
-            min-width: 50px;
+            min-width: 60px;
+            padding: 0.5em;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            transition: all 0.3s ease;
         }
-        /* 単語スタックの罫線（トグル用） */
-      .igt-word-stack-bordered.igt-word-stack {
-            border: 1px dotted #ccc;
-       }
-      .igt-flex-container.igt-bordered { /* グロス全体のコンテナ罫線（トグル用） */
-            border: 1px solid #eee;
-       }
 
+        body.light-mode .igt-word-stack {
+            background: rgba(0, 0, 0, 0.05);
+        }
 
-      .igt-word-stack > div {
-            padding: 0.1em 0.2em;
-            text-align: left;
+        .igt-word-stack:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        body.light-mode .igt-word-stack:hover {
+            background: rgba(0, 0, 0, 0.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .igt-word-stack > div {
+            padding: 0.3em 0;
+            text-align: center;
             word-break: break-all;
         }
 
-      .source-lang-flex {
-            color: #333;
+        .source-lang-flex {
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: var(--font-size-large);
         }
-      .source-lang-flex.igt-source-italic { /* 原語イタリック（トグル用） */
+
+        .source-lang-flex.igt-source-italic {
             font-style: italic;
         }
 
-      .gloss-abbr-flex {
-            font-variant: small-caps;
-            color: #555;
+        .gloss-abbr-flex {
+            color: #00d4ff;
+            font-size: var(--font-size-base);
+            text-transform: uppercase;
+            font-weight: 500;
+            letter-spacing: 1px;
         }
 
-      .free-translation-flex {
+        body.light-mode .gloss-abbr-flex {
+            color: #0066cc;
+        }
+
+        .free-translation-flex {
             width: 100%;
             flex-basis: 100%;
-            margin-top: 0.5em;
-            padding: 0.3em 0.2em;
-            border-top: 1px solid #ddd;
-            color: #444;
-        }
-      .free-translation-flex.igt-translation-italic { /* 翻訳イタリック（トグル用） */
-            font-style: italic;
-        }
-
-      .igt-error-message {
-            color: red;
-            font-weight: bold;
-            margin-bottom: 0.5em;
+            margin-top: 1em;
+            padding-top: 1em;
+            color: var(--text-primary);
+            border-top: 2px solid var(--border-color);
+            font-size: var(--font-size-large);
+            font-weight: 500;
         }
 
-      .source-lang-fallback,
-      .gloss-abbr-fallback,
-      .free-translation-fallback {
-            padding: 0.2em 0.4em;
-            border-left: 3px solid #ffdddd;
-            margin-bottom: 0.3em;
-            background-color: #fff8f8;
+        .free-translation-flex.with-quotes::before {
+            content: "'";
+            color: var(--text-accent);
         }
-      .source-lang-fallback.igt-source-italic { font-style: italic; }
-      .gloss-abbr-fallback { font-variant: small-caps; }
-      .free-translation-fallback.igt-translation-italic { font-style: italic; }
 
+        .free-translation-flex.with-quotes::after {
+            content: "'";
+            color: var(--text-accent);
+        }
+
+        .igt-error-message {
+            color: #ff006e;
+            font-weight: 700;
+            margin-bottom: 1em;
+            font-size: var(--font-size-base);
+            padding: 1em;
+            background: rgba(255, 0, 110, 0.1);
+            border-radius: 8px;
+            border: 2px solid rgba(255, 0, 110, 0.3);
+        }
+
+        /* Examples section */
+        .examples-section {
+            background: linear-gradient(135deg, rgba(106, 17, 203, 0.1) 0%, rgba(255, 0, 110, 0.1) 100%);
+            padding: 2em;
+            border-radius: 16px;
+            margin-top: 1em;
+            border: 2px solid rgba(106, 17, 203, 0.3);
+        }
+
+        body.light-mode .examples-section {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(240, 147, 251, 0.1) 100%);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+
+        .examples-section h3 {
+            margin-top: 0;
+            color: var(--text-primary);
+            font-weight: 700;
+            font-size: var(--font-size-large);
+            margin-bottom: 1.5em;
+        }
+
+        .example-item {
+            margin-bottom: 1em;
+            padding: 1.25em;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: var(--font-size-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        body.light-mode .example-item {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .example-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent 0%, rgba(6, 255, 165, 0.1) 50%, transparent 100%);
+            transition: left 0.5s ease;
+        }
+
+        body.light-mode .example-item::before {
+            background: linear-gradient(90deg, transparent 0%, rgba(102, 126, 234, 0.1) 50%, transparent 100%);
+        }
+
+        .example-item:hover::before {
+            left: 100%;
+        }
+
+        .example-item:hover {
+            background: rgba(106, 17, 203, 0.2);
+            transform: translateX(10px);
+            border-color: var(--text-accent);
+            box-shadow: 0 5px 20px rgba(106, 17, 203, 0.3);
+        }
+
+        body.light-mode .example-item:hover {
+            background: rgba(102, 126, 234, 0.2);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .example-item strong {
+            color: var(--text-accent);
+            font-size: var(--font-size-small);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Footer */
         footer {
             text-align: center;
-            padding: 1em 0;
-            margin-top: 2em;
-            background-color: #333;
-            color: #fff;
+            padding: 4em 0;
+            margin-top: 5em;
+            background: linear-gradient(180deg, rgba(17, 25, 40, 0.8) 0%, rgba(17, 25, 40, 0.95) 100%);
+            backdrop-filter: blur(20px);
+            border-top: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: var(--font-size-base);
+            transition: background 0.3s ease;
         }
 
-        /* レスポンシブ対応 */
-        @media screen and (max-width: 600px) {
-        .igt-word-stack > div {
-                font-size: 0.9em;
+        body.light-mode footer {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.95) 100%);
+        }
+
+        /* Success message */
+        .success-message {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: var(--success-gradient);
+            color: white;
+            padding: 1.25em 2.5em;
+            border-radius: 50px;
+            box-shadow: 0 10px 40px rgba(17, 153, 142, 0.4);
+            animation: slideInBounce 0.6s ease-out;
+            z-index: 1000;
+            font-weight: 700;
+            font-size: var(--font-size-base);
+        }
+
+        @keyframes slideInBounce {
+            0% {
+                transform: translateX(100%) scale(0.8);
+                opacity: 0;
             }
-        .igt-flex-container {
-                gap: 0.5em;
+            60% {
+                transform: translateX(-10px) scale(1.02);
+                opacity: 1;
             }
-        .igt-preamble {
+            100% {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: var(--text-accent);
+            animation: spin 1s ease-in-out infinite;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive design */
+        @media screen and (max-width: 768px) {
+            :root {
+                --font-size-base: 16px;
+                --font-size-small: 14px;
+                --font-size-large: 18px;
+                --font-size-xlarge: 24px;
+                --font-size-xxlarge: 30px;
+            }
+
+            .header-content {
+                padding: 0 15px;
+            }
+
+            .author-section {
+                margin: 1em 15px;
+            }
+
+            .tabs {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 10px;
+            }
+
+            .tab {
+                white-space: nowrap;
+                font-size: var(--font-size-small);
+            }
+
+            .button-group {
                 flex-direction: column;
-                align-items: flex-start;
             }
-        .igt-example-description {
-                margin-left: 0;
-                margin-top: 0.2em;
+
+            button {
+                width: 100%;
             }
-            main {
-                margin: 10px;
-                padding: 10px;
+
+            .card-body {
+                padding: 1.5em;
             }
-          .input-group input[type="text"],
-          .input-group textarea {
-                width: calc(100% - 20px);
+
+            .example-item:hover {
+                transform: none;
             }
-            #generated-html-code {
-                 width: calc(100% - 20px);
+        }
+
+        /* High contrast mode */
+        @media (prefers-contrast: high) {
+            :root {
+                --bg-card: rgba(0, 0, 0, 0.95);
+                --border-color: rgba(255, 255, 255, 0.5);
+            }
+            
+            body.light-mode {
+                --bg-card: rgba(255, 255, 255, 0.95);
+                --border-color: rgba(0, 0, 0, 0.5);
+            }
+        }
+
+        /* Reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                color: black;
+            }
+
+            .card {
+                border: 1px solid black;
+                box-shadow: none;
+                page-break-inside: avoid;
+            }
+
+            button, .tabs, .options-group, .author-link, .bg-animation, .theme-toggle, .social-share {
+                display: none;
+            }
+
+            .gloss-output-container {
+                background: none;
+                border: 1px solid black;
             }
         }
     </style>
 </head>
 <body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+    
+    <!-- Theme Toggle -->
+    <div class="theme-toggle">
+        <input type="checkbox" id="theme-toggle-checkbox" class="theme-toggle-checkbox">
+        <label for="theme-toggle-checkbox" class="theme-toggle-label">
+            <i class="fas fa-moon theme-icon"></i>
+            <div class="theme-toggle-switch"></div>
+            <i class="fas fa-sun theme-icon"></i>
+        </label>
+    </div>
+    
+    <!-- Social Share Buttons -->
+    <div class="social-share">
+        <a href="#" class="social-share-button twitter" aria-label="Share on X (Twitter)" id="share-twitter">
+            <span><i class="fab fa-x-twitter"></i></span>
+        </a>
+        <a href="#" class="social-share-button facebook" aria-label="Share on Facebook" id="share-facebook">
+            <span><i class="fab fa-facebook-f"></i></span>
+        </a>
+        <a href="#" class="social-share-button instagram" aria-label="Share on Instagram" id="share-instagram">
+            <span><i class="fab fa-instagram"></i></span>
+        </a>
+        <a href="#" class="social-share-button linkedin" aria-label="Share on LinkedIn" id="share-linkedin">
+            <span><i class="fab fa-linkedin-in"></i></span>
+        </a>
+    </div>
+    
+    <div class="bg-animation">
+        <div class="particle" style="width: 4px; height: 4px; left: 10%; top: 20%; animation-delay: 0s;"></div>
+        <div class="particle" style="width: 6px; height: 6px; left: 30%; top: 60%; animation-delay: 2s;"></div>
+        <div class="particle" style="width: 3px; height: 3px; left: 50%; top: 40%; animation-delay: 4s;"></div>
+        <div class="particle" style="width: 5px; height: 5px; left: 70%; top: 80%; animation-delay: 6s;"></div>
+        <div class="particle" style="width: 4px; height: 4px; left: 90%; top: 30%; animation-delay: 8s;"></div>
+    </div>
+    
     <header>
-        <h1>インターリニアグロス ジェネレーター</h1>
+        <div class="header-content">
+            <h1>Universal Interlinear Gloss Generator</h1>
+            <div class="header-subtitle">
+                <span lang="ja">ユニバーサル・インターリニアグロス・ジェネレーター</span>
+            </div>
+            <p>Academic-grade interlinear glossing tool with HTML, LaTeX, and TEI/XML support</p>
+        </div>
     </header>
 
-    <main>
-        <section id="input-section">
-            <h2>グロスデータを入力してください</h2>
-            <div class="input-group">
-                <label for="input-num">例文番号 (任意):</label>
-                <input type="text" id="input-num" placeholder="(1a)">
-            </div>
-            <div class="input-group">
-                <label for="input-desc">例文説明 (任意):</label>
-                <input type="text" id="input-desc" placeholder="能動態の文。">
-            </div>
-            <div class="input-group">
-                <label for="input-src">原語行:</label>
-                <textarea id="input-src" rows="2" placeholder="Neko ga sakana o tabeta"></textarea>
-            </div>
-            <div class="input-group">
-                <label for="input-gl">グロス行:</label>
-                <textarea id="input-gl" rows="2" placeholder="cat NOM fish ACC eat.PST"></textarea>
-            </div>
-            <div class="input-group">
-                <label for="input-trans">翻訳行:</label>
-                <textarea id="input-trans" rows="2" placeholder="The cat ate the fish."></textarea>
-            </div>
-            <button id="generate-button">グロスを生成・表示</button>
-        </section>
+    <div class="author-section">
+        <div class="author-info">
+            <h3>Created by / 作成者</h3>
+            <div class="author-name">So Miyagawa / <span lang="ja">宮川創</span></div>
+            <div class="author-title">Associate Professor at the University of Tsukuba<br><span lang="ja">筑波大学准教授</span></div>
+            <a href="https://somiyagawa.com/" target="_blank" rel="noopener noreferrer" class="author-link">
+                <span>Visit My Website / ウェブサイトを見る →</span>
+            </a>
+        </div>
+    </div>
 
-        <section id="options-section">
-            <h2>表示オプション</h2>
-            <div class="options-group">
-                <div>
-                    <input type="checkbox" id="toggle-italics" checked>
-                    <label for="toggle-italics">原語行と翻訳行をイタリックにする</label>
+    <main id="main">
+        <div class="card">
+            <div class="card-header">
+                <h2>Input Gloss Data / <span lang="ja">グロスデータ入力</span></h2>
+            </div>
+            <div class="card-body">
+                <div class="input-group">
+                    <label for="input-num">Example Number / <span lang="ja">例文番号</span> (optional):</label>
+                    <input type="text" id="input-num" placeholder="(1a)" aria-describedby="num-help">
+                    <div id="num-help" class="input-help">e.g., (1), (1a), (i), etc.</div>
                 </div>
-                <div>
-                    <input type="checkbox" id="toggle-borders" checked>
-                    <label for="toggle-borders">単語ごとの罫線と全体の枠線を表示する</label>
+                <div class="input-group">
+                    <label for="input-desc">Example Description / <span lang="ja">例文説明</span> (optional):</label>
+                    <input type="text" id="input-desc" placeholder="Active voice construction" aria-describedby="desc-help">
+                    <div id="desc-help" class="input-help">Brief description or context</div>
+                </div>
+                <div class="input-group">
+                    <label for="input-src">Source Language / <span lang="ja">原語行</span>: <span aria-label="required">*</span></label>
+                    <textarea id="input-src" rows="2" placeholder="kore wa pen desu" required aria-describedby="src-help" aria-required="true"></textarea>
+                    <div id="src-help" class="input-help">Original text (space-separated words)</div>
+                </div>
+                <div class="input-group">
+                    <label for="input-gl">Gloss Line / <span lang="ja">グロス行</span>: <span aria-label="required">*</span></label>
+                    <textarea id="input-gl" rows="2" placeholder="this TOP pen COP.NPST" required aria-describedby="gl-help" aria-required="true"></textarea>
+                    <div id="gl-help" class="input-help">Morpheme-by-morpheme gloss (use hyphens for morpheme boundaries)</div>
+                </div>
+                <div class="input-group">
+                    <label for="input-trans">Free Translation / <span lang="ja">翻訳行</span>: <span aria-label="required">*</span></label>
+                    <textarea id="input-trans" rows="2" placeholder="This is a pen." required aria-describedby="trans-help" aria-required="true"></textarea>
+                    <div id="trans-help" class="input-help">Natural translation</div>
+                </div>
+                <div class="button-group">
+                    <button id="generate-button" class="success" aria-label="Generate gloss">Generate Gloss / <span lang="ja">グロス生成</span></button>
+                    <button id="clear-button" class="secondary" aria-label="Clear all fields">Clear All / <span lang="ja">クリア</span></button>
+                    <button id="example-button" class="primary" aria-label="Load random example">Load Example / <span lang="ja">例文を読み込む</span></button>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <section id="display-section">
-            <h2>表示結果</h2>
-            <div id="live-gloss-output" class="gloss-output-container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Display Options / <span lang="ja">表示オプション</span></h2>
+            </div>
+            <div class="card-body">
+                <div class="options-group" role="group" aria-labelledby="display-options-heading">
+                    <div class="option-item">
+                        <input type="checkbox" id="toggle-italics" checked>
+                        <label for="toggle-italics">Italicize source text / <span lang="ja">原語をイタリック</span></label>
+                    </div>
+                    <div class="option-item">
+                        <input type="checkbox" id="toggle-quotes" checked>
+                        <label for="toggle-quotes">Add quotes to translation / <span lang="ja">翻訳に引用符</span></label>
+                    </div>
                 </div>
-        </section>
+            </div>
+        </div>
 
-        <section id="code-output-section">
-            <h2>生成されたHTMLコード</h2>
-            <textarea id="generated-html-code" readonly rows="10"></textarea>
-            <button id="copy-html-button">HTMLをコピー</button>
-        </section>
+        <div class="card">
+            <div class="card-header">
+                <h2>Preview / <span lang="ja">プレビュー</span></h2>
+            </div>
+            <div class="card-body">
+                <div id="live-gloss-output" class="gloss-output-container" aria-live="polite" aria-label="Gloss preview">
+                    <p style="color: var(--text-muted); text-align: center; font-size: 1.1em;">Your formatted gloss will appear here / <span lang="ja">フォーマットされたグロスがここに表示されます</span></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Generated Code / <span lang="ja">生成コード</span></h2>
+            </div>
+            <div class="card-body">
+                <div class="tabs" role="tablist" aria-label="Output format tabs">
+                    <button class="tab active" data-tab="html" role="tab" aria-selected="true" aria-controls="html-tab">HTML</button>
+                    <button class="tab" data-tab="tei" role="tab" aria-selected="false" aria-controls="tei-tab">TEI/XML</button>
+                    <button class="tab" data-tab="expex" role="tab" aria-selected="false" aria-controls="expex-tab">LaTeX (ExPex)</button>
+                    <button class="tab" data-tab="gb4e" role="tab" aria-selected="false" aria-controls="gb4e-tab">LaTeX (gb4e)</button>
+                    <button class="tab" data-tab="linguex" role="tab" aria-selected="false" aria-controls="linguex-tab">LaTeX (linguex)</button>
+                    <button class="tab" data-tab="langsci" role="tab" aria-selected="false" aria-controls="langsci-tab">LaTeX (langsci-gb4e)</button>
+                </div>
+
+                <div id="html-tab" class="tab-content active" role="tabpanel" aria-labelledby="html-tab-button">
+                    <label for="generated-html-code" class="visually-hidden">Generated HTML code</label>
+                    <textarea id="generated-html-code" class="code-output" readonly aria-label="Generated HTML code"></textarea>
+                    <button class="copy-button" data-target="generated-html-code" aria-label="Copy HTML code to clipboard">Copy HTML Code</button>
+                </div>
+
+                <div id="tei-tab" class="tab-content" role="tabpanel" aria-labelledby="tei-tab-button">
+                    <label for="generated-tei-code" class="visually-hidden">Generated TEI/XML code</label>
+                    <textarea id="generated-tei-code" class="code-output" readonly aria-label="Generated TEI/XML code"></textarea>
+                    <button class="copy-button" data-target="generated-tei-code" aria-label="Copy TEI/XML code to clipboard">Copy TEI/XML Code</button>
+                </div>
+
+                <div id="expex-tab" class="tab-content" role="tabpanel" aria-labelledby="expex-tab-button">
+                    <label for="generated-expex-code" class="visually-hidden">Generated ExPex code</label>
+                    <textarea id="generated-expex-code" class="code-output" readonly aria-label="Generated ExPex code"></textarea>
+                    <button class="copy-button" data-target="generated-expex-code" aria-label="Copy ExPex code to clipboard">Copy ExPex Code</button>
+                </div>
+
+                <div id="gb4e-tab" class="tab-content" role="tabpanel" aria-labelledby="gb4e-tab-button">
+                    <label for="generated-gb4e-code" class="visually-hidden">Generated gb4e code</label>
+                    <textarea id="generated-gb4e-code" class="code-output" readonly aria-label="Generated gb4e code"></textarea>
+                    <button class="copy-button" data-target="generated-gb4e-code" aria-label="Copy gb4e code to clipboard">Copy gb4e Code</button>
+                </div>
+
+                <div id="linguex-tab" class="tab-content" role="tabpanel" aria-labelledby="linguex-tab-button">
+                    <label for="generated-linguex-code" class="visually-hidden">Generated linguex code</label>
+                    <textarea id="generated-linguex-code" class="code-output" readonly aria-label="Generated linguex code"></textarea>
+                    <button class="copy-button" data-target="generated-linguex-code" aria-label="Copy linguex code to clipboard">Copy linguex Code</button>
+                </div>
+
+                <div id="langsci-tab" class="tab-content" role="tabpanel" aria-labelledby="langsci-tab-button">
+                    <label for="generated-langsci-code" class="visually-hidden">Generated langsci-gb4e code</label>
+                    <textarea id="generated-langsci-code" class="code-output" readonly aria-label="Generated langsci-gb4e code"></textarea>
+                    <button class="copy-button" data-target="generated-langsci-code" aria-label="Copy langsci-gb4e code to clipboard">Copy langsci-gb4e Code</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Examples / <span lang="ja">使用例</span></h2>
+            </div>
+            <div class="card-body">
+                <div class="examples-section">
+                    <h3>Click to load an example / <span lang="ja">クリックして例を読み込む</span>:</h3>
+                    <div class="example-item" data-num="(1)" data-desc="Japanese copula construction" 
+                         data-src="kore wa pen desu" 
+                         data-gl="this TOP pen COP.NPST" 
+                         data-trans="This is a pen."
+                         tabindex="0"
+                         role="button"
+                         aria-label="Load Japanese example: kore wa pen desu">
+                        <strong>Japanese</strong><br>
+                        kore wa pen desu
+                    </div>
+                    <div class="example-item" data-num="(2)" data-desc="Egyptian passive construction" 
+                         data-src="sḏm.n.tw=f" 
+                         data-gl="hear.PFV.PASS=3SG.M" 
+                         data-trans="He was heard."
+                         tabindex="0"
+                         role="button"
+                         aria-label="Load Egyptian example: sḏm.n.tw=f">
+                        <strong>Ancient Egyptian</strong><br>
+                        sḏm.n.tw=f
+                    </div>
+                    <div class="example-item" data-num="(3)" data-desc="Coptic nominal sentence" 
+                         data-src="anok pe pnoute" 
+                         data-gl="1SG COP.M DEF.god" 
+                         data-trans="I am God."
+                         tabindex="0"
+                         role="button"
+                         aria-label="Load Coptic example: anok pe pnoute">
+                        <strong>Coptic</strong><br>
+                        anok pe pnoute
+                    </div>
+                    <div class="example-item" data-num="(4)" data-desc="English ditransitive" 
+                         data-src="John gave Mary the book" 
+                         data-gl="John give.PST Mary the book" 
+                         data-trans="John gave Mary the book."
+                         tabindex="0"
+                         role="button"
+                         aria-label="Load English example: John gave Mary the book">
+                        <strong>English</strong><br>
+                        John gave Mary the book
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <footer>
-        <p>&copy; インターリニアグロスツール 2024</p>
+        <p>&copy; 2024 So Miyagawa / <span lang="ja">宮川創</span></p>
+        <p>Universal Interlinear Gloss Generator | <span lang="ja">ユニバーサル・インターリニアグロス・ジェネレーター</span></p>
+        <p>Academic Linguistics Tool | <span lang="ja">学術言語学ツール</span></p>
     </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Theme toggle functionality
+            const themeToggle = document.getElementById('theme-toggle-checkbox');
+            const body = document.body;
+            
+            // Check for saved theme preference or default to dark mode
+            const currentTheme = localStorage.getItem('theme') || 'dark';
+            if (currentTheme === 'light') {
+                body.classList.add('light-mode');
+                themeToggle.checked = true;
+            }
+            
+            themeToggle.addEventListener('change', () => {
+                if (themeToggle.checked) {
+                    body.classList.add('light-mode');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    body.classList.remove('light-mode');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+            
+            // Social share functionality
+            const shareUrl = encodeURIComponent(window.location.href);
+            const shareTitle = encodeURIComponent('Universal Interlinear Gloss Generator by So Miyagawa');
+            const shareDescription = encodeURIComponent('Academic-grade interlinear glossing tool with HTML, LaTeX, and TEI/XML support');
+            
+            document.getElementById('share-twitter').href = `https://twitter.com/intent/tweet?text=${shareTitle}&url=${shareUrl}`;
+            document.getElementById('share-facebook').href = `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`;
+            document.getElementById('share-linkedin').href = `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`;
+            
+            // Instagram doesn't support direct sharing, so we'll copy the URL
+            document.getElementById('share-instagram').addEventListener('click', (e) => {
+                e.preventDefault();
+                navigator.clipboard.writeText(window.location.href).then(() => {
+                    showSuccessMessage('Link copied! Share it on Instagram / リンクをコピーしました！');
+                });
+            });
+            
+            // Elements
             const generateButton = document.getElementById('generate-button');
-            const copyHtmlButton = document.getElementById('copy-html-button');
-
+            const clearButton = document.getElementById('clear-button');
+            const exampleButton = document.getElementById('example-button');
+            
             const inputNum = document.getElementById('input-num');
             const inputDesc = document.getElementById('input-desc');
             const inputSrc = document.getElementById('input-src');
             const inputGl = document.getElementById('input-gl');
             const inputTrans = document.getElementById('input-trans');
-
+            
             const liveGlossOutput = document.getElementById('live-gloss-output');
             const generatedHtmlCode = document.getElementById('generated-html-code');
-
+            const generatedTeiCode = document.getElementById('generated-tei-code');
+            const generatedExpexCode = document.getElementById('generated-expex-code');
+            const generatedGb4eCode = document.getElementById('generated-gb4e-code');
+            const generatedLinguexCode = document.getElementById('generated-linguex-code');
+            const generatedLangsciCode = document.getElementById('generated-langsci-code');
+            
             const toggleItalicsCheckbox = document.getElementById('toggle-italics');
-            const toggleBordersCheckbox = document.getElementById('toggle-borders');
+            const toggleQuotesCheckbox = document.getElementById('toggle-quotes');
+
+            // Tab functionality with ARIA
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.tab').forEach(t => {
+                        t.classList.remove('active');
+                        t.setAttribute('aria-selected', 'false');
+                    });
+                    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    tab.setAttribute('aria-selected', 'true');
+                    document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+                });
+
+                // Keyboard navigation for tabs
+                tab.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                        const tabs = Array.from(document.querySelectorAll('.tab'));
+                        const currentIndex = tabs.indexOf(tab);
+                        let newIndex;
+                        
+                        if (e.key === 'ArrowLeft') {
+                            newIndex = currentIndex - 1;
+                            if (newIndex < 0) newIndex = tabs.length - 1;
+                        } else {
+                            newIndex = currentIndex + 1;
+                            if (newIndex >= tabs.length) newIndex = 0;
+                        }
+                        
+                        tabs[newIndex].focus();
+                        tabs[newIndex].click();
+                    }
+                });
+            });
+
+            // Copy functionality
+            document.querySelectorAll('.copy-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetId = button.dataset.target;
+                    const targetElement = document.getElementById(targetId);
+                    const textToCopy = targetElement.value;
+                    
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(textToCopy).then(() => {
+                            showSuccessMessage('Copied to clipboard! / クリップボードにコピーしました！');
+                        }).catch(err => {
+                            console.error('Failed to copy:', err);
+                            fallbackCopy(textToCopy);
+                        });
+                    } else {
+                        fallbackCopy(textToCopy);
+                    }
+                });
+            });
+
+            function fallbackCopy(text) {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                textArea.style.position = 'fixed';
+                textArea.style.left = '-9999px';
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showSuccessMessage('Copied to clipboard! / クリップボードにコピーしました！');
+                } catch (err) {
+                    console.error('Fallback copy failed:', err);
+                    alert('Copy failed. Please copy manually.');
+                }
+                document.body.removeChild(textArea);
+            }
+
+            function showSuccessMessage(message) {
+                const successDiv = document.createElement('div');
+                successDiv.className = 'success-message';
+                successDiv.textContent = message;
+                successDiv.setAttribute('role', 'status');
+                successDiv.setAttribute('aria-live', 'polite');
+                document.body.appendChild(successDiv);
+                
+                setTimeout(() => {
+                    successDiv.style.animation = 'slideInBounce 0.6s ease-out reverse';
+                    setTimeout(() => successDiv.remove(), 600);
+                }, 3000);
+            }
+
+            // Syntax highlighting
+            function highlightCode(code, type) {
+                if (type === 'html' || type === 'tei') {
+                    return code
+                        .replace(/(&lt;\/?)([a-zA-Z][a-zA-Z0-9-]*)(.*?)(&gt;)/g, 
+                            (match, p1, p2, p3, p4) => {
+                                const attrs = p3.replace(/\s+([a-zA-Z][a-zA-Z0-9-]*)(="[^"]*")?/g, 
+                                    (attrMatch, attrName, attrValue) => {
+                                        if (attrValue) {
+                                            return ` <span class="code-attr">${attrName}</span>=<span class="code-string">${attrValue}</span>`;
+                                        }
+                                        return ` <span class="code-attr">${attrName}</span>`;
+                                    });
+                                return `<span class="code-tag">${p1}${p2}</span>${attrs}<span class="code-tag">${p4}</span>`;
+                            })
+                        .replace(/(&lt;!--.*?--&gt;)/g, '<span class="code-comment">$1</span>');
+                } else if (type === 'latex') {
+                    return code
+                        .replace(/(\\[a-zA-Z]+)/g, '<span class="code-keyword">$1</span>')
+                        .replace(/(\{|\}|\[|\])/g, '<span class="code-tag">$1</span>')
+                        .replace(/('.*?')/g, '<span class="code-string">$1</span>')
+                        .replace(/(%.*)$/gm, '<span class="code-comment">$1</span>');
+                }
+                return code;
+            }
+
+            // Generate button
+            generateButton.addEventListener('click', () => {
+                const num = inputNum.value.trim();
+                const desc = inputDesc.value.trim();
+                const src = inputSrc.value.trim();
+                const gl = inputGl.value.trim();
+                const trans = inputTrans.value.trim();
+
+                if (!src || !gl || !trans) {
+                    liveGlossOutput.innerHTML = '<p class="igt-error-message">Source, gloss, and translation lines are required. / <span lang="ja">原語行、グロス行、翻訳行は必須です。</span></p>';
+                    return;
+                }
+
+                // Generate display
+                liveGlossOutput.innerHTML = '';
+                renderGlossForDisplay(num, desc, src, gl, trans, liveGlossOutput);
+                applyDisplayOptions();
+
+                // Generate codes
+                generateAllCodes(num, desc, src, gl, trans);
+            });
+
+            // Clear button
+            clearButton.addEventListener('click', () => {
+                inputNum.value = '';
+                inputDesc.value = '';
+                inputSrc.value = '';
+                inputGl.value = '';
+                inputTrans.value = '';
+                liveGlossOutput.innerHTML = '<p style="color: var(--text-muted); text-align: center; font-size: 1.1em;">Your formatted gloss will appear here / <span lang="ja">フォーマットされたグロスがここに表示されます</span></p>';
+                clearAllCodes();
+            });
+
+            // Example loading with keyboard support
+            document.querySelectorAll('.example-item').forEach(example => {
+                const loadExample = () => {
+                    inputNum.value = example.dataset.num || '';
+                    inputDesc.value = example.dataset.desc || '';
+                    inputSrc.value = example.dataset.src || '';
+                    inputGl.value = example.dataset.gl || '';
+                    inputTrans.value = example.dataset.trans || '';
+                    generateButton.click();
+                };
+
+                example.addEventListener('click', loadExample);
+                example.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        loadExample();
+                    }
+                });
+            });
+
+            // Random example button
+            exampleButton.addEventListener('click', () => {
+                const examples = document.querySelectorAll('.example-item');
+                const randomExample = examples[Math.floor(Math.random() * examples.length)];
+                randomExample.click();
+            });
+
+            // Display options
+            toggleItalicsCheckbox.addEventListener('change', applyDisplayOptions);
+            toggleQuotesCheckbox.addEventListener('change', applyDisplayOptions);
 
             function applyDisplayOptions() {
-                const sourceElements = liveGlossOutput.querySelectorAll('.source-lang-flex,.source-lang-fallback');
-                const translationElements = liveGlossOutput.querySelectorAll('.free-translation-flex,.free-translation-fallback');
-                const igtContainer = liveGlossOutput.querySelector('.igt-flex-container');
+                const sourceElements = liveGlossOutput.querySelectorAll('.source-lang-flex');
+                const translationElements = liveGlossOutput.querySelectorAll('.free-translation-flex');
 
                 sourceElements.forEach(el => {
                     if (toggleItalicsCheckbox.checked) {
@@ -344,201 +1795,399 @@
                         el.classList.remove('igt-source-italic');
                     }
                 });
+
                 translationElements.forEach(el => {
-                    if (toggleItalicsCheckbox.checked) {
-                        el.classList.add('igt-translation-italic');
+                    if (toggleQuotesCheckbox.checked) {
+                        el.classList.add('with-quotes');
                     } else {
-                        el.classList.remove('igt-translation-italic');
+                        el.classList.remove('with-quotes');
                     }
                 });
-
-                if (igtContainer) {
-                    if (toggleBordersCheckbox.checked) {
-                        igtContainer.classList.add('igt-word-stack-bordered');
-                        igtContainer.classList.add('igt-bordered');
-                    } else {
-                        igtContainer.classList.remove('igt-word-stack-bordered');
-                        igtContainer.classList.remove('igt-bordered');
-                    }
-                }
             }
 
-            generateButton.addEventListener('click', () => {
-                const num = inputNum.value.trim();
-                const desc = inputDesc.value.trim();
-                const src = inputSrc.value.trim();
-                const gl = inputGl.value.trim();
-                const trans = inputTrans.value.trim();
+            function renderGlossForDisplay(num, desc, src, gl, trans, displayContainer) {
+                const container = document.createElement('div');
+                container.className = 'igt-container';
 
-                liveGlossOutput.innerHTML = '';
-                generatedHtmlCode.value = '';
+                // Preamble
+                if (num || desc) {
+                    const preambleDiv = document.createElement('div');
+                    preambleDiv.className = 'igt-preamble';
+                    
+                    if (num) {
+                        const numSpan = document.createElement('span');
+                        numSpan.className = 'igt-example-number';
+                        numSpan.textContent = num;
+                        preambleDiv.appendChild(numSpan);
+                    }
+                    
+                    if (desc) {
+                        const descSpan = document.createElement('span');
+                        descSpan.className = 'igt-example-description';
+                        descSpan.textContent = desc;
+                        preambleDiv.appendChild(descSpan);
+                    }
+                    
+                    container.appendChild(preambleDiv);
+                }
 
-                if (!src ||!gl ||!trans) {
-                    liveGlossOutput.innerHTML = '<p class="igt-error-message">原語行、グロス行、翻訳行は必須です。</p>';
+                // Gloss content
+                const sourceTokens = src.split(/\s+/);
+                const glossTokens = gl.split(/\s+/);
+
+                if (sourceTokens.length !== glossTokens.length) {
+                    const errorP = document.createElement('p');
+                    errorP.className = 'igt-error-message';
+                    errorP.innerHTML = 'Error: Mismatch between source and gloss token counts. / <span lang="ja">エラー：原語とグロスのトークン数が一致しません。</span>';
+                    container.appendChild(errorP);
+                    displayContainer.appendChild(container);
                     return;
                 }
 
-                renderGlossForDisplay(num, desc, src, gl, trans, liveGlossOutput);
-                applyDisplayOptions(); // 表示オプションを適用
+                const igtFlexContainer = document.createElement('div');
+                igtFlexContainer.className = 'igt-flex-container';
 
-                let htmlToCopy = `\n`;
-                htmlToCopy += `<div class="gloss"`;
-                if (num) htmlToCopy += `\n     data-num="${escapeHtml(num)}"`;
-                if (desc) htmlToCopy += `\n     data-desc="${escapeHtml(desc)}"`;
-                htmlToCopy += `\n     data-src="${escapeHtml(src)}"`;
-                htmlToCopy += `\n     data-gl="${escapeHtml(gl)}"`;
-                htmlToCopy += `\n     data-trans="${escapeHtml(trans)}">`;
-                htmlToCopy += `\n    \n</div>`;
-                generatedHtmlCode.value = htmlToCopy;
-            });
+                for (let i = 0; i < sourceTokens.length; i++) {
+                    const wordStack = document.createElement('div');
+                    wordStack.className = 'igt-word-stack';
 
-            copyHtmlButton.addEventListener('click', () => {
-                const textToCopy = generatedHtmlCode.value;
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard.writeText(textToCopy).then(() => {
-                        copyHtmlButton.textContent = 'コピーしました!';
-                        setTimeout(() => {
-                            copyHtmlButton.textContent = 'HTMLをコピー';
-                        }, 2000);
-                    }).catch(err => {
-                        console.error('クリップボードへのコピーに失敗しました: ', err);
-                        alert('コピーに失敗しました。');
-                    });
-                } else {
-                    const textArea = document.createElement('textarea');
-                    textArea.value = textToCopy;
-                    textArea.style.position = 'fixed';
-                    textArea.style.left = '-9999px';
-                    document.body.appendChild(textArea);
-                    textArea.focus();
-                    textArea.select();
-                    try {
-                        document.execCommand('copy');
-                        copyHtmlButton.textContent = 'コピーしました!';
-                        setTimeout(() => {
-                            copyHtmlButton.textContent = 'HTMLをコピー';
-                        }, 2000);
-                    } catch (err) {
-                        console.error('フォールバックコピーに失敗しました: ', err);
-                        alert('コピーに失敗しました。');
-                    }
-                    document.body.removeChild(textArea);
+                    const sourceDiv = document.createElement('div');
+                    sourceDiv.className = 'source-lang-flex';
+                    sourceDiv.textContent = sourceTokens[i];
+                    wordStack.appendChild(sourceDiv);
+
+                    const glossDiv = document.createElement('div');
+                    glossDiv.className = 'gloss-abbr-flex';
+                    glossDiv.textContent = glossTokens[i];
+                    wordStack.appendChild(glossDiv);
+
+                    igtFlexContainer.appendChild(wordStack);
                 }
-            });
 
-            toggleItalicsCheckbox.addEventListener('change', applyDisplayOptions);
-            toggleBordersCheckbox.addEventListener('change', applyDisplayOptions);
+                const translationDiv = document.createElement('div');
+                translationDiv.className = 'free-translation-flex';
+                translationDiv.textContent = trans;
+                igtFlexContainer.appendChild(translationDiv);
 
-            // 初期状態でオプションを適用（もしデフォルトで何か表示されていれば）
+                container.appendChild(igtFlexContainer);
+                displayContainer.appendChild(container);
+            }
+
+            function generateAllCodes(num, desc, src, gl, trans) {
+                // HTML
+                const htmlCode = generateHtmlCode(num, desc, src, gl, trans);
+                generatedHtmlCode.value = htmlCode;
+                generatedHtmlCode.innerHTML = highlightCode(escapeHtml(htmlCode), 'html');
+                
+                // TEI/XML
+                const teiCode = generateTeiCode(num, desc, src, gl, trans);
+                generatedTeiCode.value = teiCode;
+                generatedTeiCode.innerHTML = highlightCode(escapeHtml(teiCode), 'tei');
+                
+                // ExPex
+                const expexCode = generateExpexCode(num, desc, src, gl, trans);
+                generatedExpexCode.value = expexCode;
+                generatedExpexCode.innerHTML = highlightCode(expexCode, 'latex');
+                
+                // gb4e
+                const gb4eCode = generateGb4eCode(num, desc, src, gl, trans);
+                generatedGb4eCode.value = gb4eCode;
+                generatedGb4eCode.innerHTML = highlightCode(gb4eCode, 'latex');
+                
+                // linguex
+                const linguexCode = generateLinguexCode(num, desc, src, gl, trans);
+                generatedLinguexCode.value = linguexCode;
+                generatedLinguexCode.innerHTML = highlightCode(linguexCode, 'latex');
+                
+                // langsci-gb4e
+                const langsciCode = generateLangsciCode(num, desc, src, gl, trans);
+                generatedLangsciCode.value = langsciCode;
+                generatedLangsciCode.innerHTML = highlightCode(langsciCode, 'latex');
+            }
+
+            function clearAllCodes() {
+                generatedHtmlCode.value = '';
+                generatedHtmlCode.innerHTML = '';
+                generatedTeiCode.value = '';
+                generatedTeiCode.innerHTML = '';
+                generatedExpexCode.value = '';
+                generatedExpexCode.innerHTML = '';
+                generatedGb4eCode.value = '';
+                generatedGb4eCode.innerHTML = '';
+                generatedLinguexCode.value = '';
+                generatedLinguexCode.innerHTML = '';
+                generatedLangsciCode.value = '';
+                generatedLangsciCode.innerHTML = '';
+            }
+
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function escapeXml(text) {
+                return text
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&apos;');
+            }
+
+            function escapeLatex(text) {
+                return text
+                    .replace(/\\/g, '\\textbackslash{}')
+                    .replace(/\{/g, '\\{')
+                    .replace(/\}/g, '\\}')
+                    .replace(/\$/g, '\\$')
+                    .replace(/#/g, '\\#')
+                    .replace(/%/g, '\\%')
+                    .replace(/&/g, '\\&')
+                    .replace(/_/g, '\\_')
+                    .replace(/\^/g, '\\^{}')
+                    .replace(/~/g, '\\~{}');
+            }
+
+            function generateHtmlCode(num, desc, src, gl, trans) {
+                let html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interlinear Gloss</title>
+    <style>
+        .interlinear-gloss {
+            margin: 20px 0;
+            font-family: Georgia, serif;
+            line-height: 1.8;
+        }
+        
+        .gloss-preamble {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+        
+        .gloss-number {
+            font-weight: bold;
+        }
+        
+        .gloss-description {
+            font-style: italic;
+            color: #666;
+        }
+        
+        .gloss-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 10px;
+            align-items: flex-start;
+        }
+        
+        .gloss-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 50px;
+        }
+        
+        .source-word {
+            font-style: italic;
+            margin-bottom: 5px;
+        }
+        
+        .gloss-word {
+            font-variant: small-caps;
+            font-size: 0.9em;
+            color: #444;
+        }
+        
+        .translation {
+            margin-top: 10px;
+            quotes: "'" "'";
+        }
+        
+        .translation::before {
+            content: open-quote;
+        }
+        
+        .translation::after {
+            content: close-quote;
+        }
+    </style>
+</head>
+<body>
+    <div class="interlinear-gloss">`;
+                
+                if (num || desc) {
+                    html += '\n        <div class="gloss-preamble">';
+                    if (num) html += `\n            <span class="gloss-number">${escapeHtml(num)}</span>`;
+                    if (desc) html += `\n            <span class="gloss-description">${escapeHtml(desc)}</span>`;
+                    html += '\n        </div>';
+                }
+                
+                html += '\n        <div class="gloss-content">';
+                
+                const sourceTokens = src.split(/\s+/);
+                const glossTokens = gl.split(/\s+/);
+                
+                for (let i = 0; i < sourceTokens.length; i++) {
+                    html += '\n            <div class="gloss-unit">';
+                    html += `\n                <div class="source-word">${escapeHtml(sourceTokens[i])}</div>`;
+                    html += `\n                <div class="gloss-word">${escapeHtml(glossTokens[i])}</div>`;
+                    html += '\n            </div>';
+                }
+                
+                html += '\n        </div>';
+                html += `\n        <div class="translation">${escapeHtml(trans)}</div>`;
+                html += '\n    </div>\n</body>\n</html>';
+                
+                return html;
+            }
+
+            function generateTeiCode(num, desc, src, gl, trans) {
+                let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+                xml += '<cit type="example"';
+                if (num) xml += ` n="${escapeXml(num)}"`;
+                xml += '>\n';
+                
+                if (desc) {
+                    xml += `  <note type="description">${escapeXml(desc)}</note>\n`;
+                }
+                
+                xml += '  <quote xml:lang="und">\n';
+                xml += '    <seg type="original">\n';
+                
+                const sourceTokens = src.split(/\s+/);
+                const glossTokens = gl.split(/\s+/);
+                
+                for (let i = 0; i < sourceTokens.length; i++) {
+                    xml += '      <w>\n';
+                    xml += `        <seg type="form">${escapeXml(sourceTokens[i])}</seg>\n`;
+                    xml += `        <seg type="gloss">${escapeXml(glossTokens[i])}</seg>\n`;
+                    xml += '      </w>\n';
+                }
+                
+                xml += '    </seg>\n';
+                xml += '  </quote>\n';
+                xml += `  <cit type="translation">\n`;
+                xml += `    <quote xml:lang="en">${escapeXml(trans)}</quote>\n`;
+                xml += '  </cit>\n';
+                xml += '</cit>';
+                
+                return xml;
+            }
+
+            function generateExpexCode(num, desc, src, gl, trans) {
+                let code = '\\ex';
+                if (num) code += `[${num}]`;
+                if (desc) code += `{${desc}}`;
+                code += '\n';
+                code += '\\begingl\n';
+                
+                const sourceTokens = src.split(/\s+/);
+                const glossTokens = gl.split(/\s+/);
+                
+                code += '\\gla ';
+                sourceTokens.forEach(token => {
+                    code += `${token} `;
+                });
+                code += '//\n';
+                
+                code += '\\glb ';
+                glossTokens.forEach(token => {
+                    code += `${token} `;
+                });
+                code += '//\n';
+                
+                code += `\\glft '${trans}' //\n`;
+                code += '\\endgl\n';
+                code += '\\xe';
+                
+                return code;
+            }
+
+            function generateGb4eCode(num, desc, src, gl, trans) {
+                let code = '\\begin{exe}\n';
+                code += '\\ex';
+                if (num) code += `[${num}]`;
+                if (desc) code += ` ${desc}\n`;
+                code += '\\gll ';
+                
+                const sourceTokens = src.split(/\s+/);
+                const glossTokens = gl.split(/\s+/);
+                
+                sourceTokens.forEach(token => {
+                    code += `${token} `;
+                });
+                code += '\\\\\n     ';
+                
+                glossTokens.forEach(token => {
+                    code += `${token} `;
+                });
+                code += '\\\\\n';
+                
+                code += `\\glt '${trans}'\n`;
+                code += '\\end{exe}';
+                
+                return code;
+            }
+
+            function generateLinguexCode(num, desc, src, gl, trans) {
+                let code = '\\ex.';
+                if (desc) code += ` ${desc}\n`;
+                code += '\\ag. ';
+                
+                const sourceTokens = src.split(/\s+/);
+                const glossTokens = gl.split(/\s+/);
+                
+                sourceTokens.forEach(token => {
+                    code += `${token} `;
+                });
+                code += '\\\\\n';
+                
+                glossTokens.forEach(token => {
+                    code += `${token} `;
+                });
+                code += '\\\\\n';
+                
+                code += `'${trans}'`;
+                
+                return code;
+            }
+
+            function generateLangsciCode(num, desc, src, gl, trans) {
+                let code = '\\ea';
+                if (num) code += `[${num}]`;
+                if (desc) code += `{${desc}}`;
+                code += '\n';
+                code += '\\gll ';
+                
+                const sourceTokens = src.split(/\s+/);
+                const glossTokens = gl.split(/\s+/);
+                
+                sourceTokens.forEach(token => {
+                    code += `${token} `;
+                });
+                code += '\\\\\n     ';
+                
+                glossTokens.forEach(token => {
+                    code += `${token} `;
+                });
+                code += '\\\\\n';
+                
+                code += `\\glt '${trans}'\n`;
+                code += '\\z';
+                
+                return code;
+            }
+
+            // Initial state
             applyDisplayOptions();
         });
-
-        function renderGlossForDisplay(num, desc, src, gl, trans, displayContainer) {
-            const preambleDiv = document.createElement('div');
-            preambleDiv.className = 'igt-preamble';
-            let preambleAdded = false;
-
-            if (num) {
-                const numSpan = document.createElement('span');
-                numSpan.className = 'igt-example-number';
-                numSpan.textContent = num;
-                preambleDiv.appendChild(numSpan);
-                preambleAdded = true;
-            }
-
-            if (desc) {
-                const descSpan = document.createElement('span');
-                descSpan.className = 'igt-example-description';
-                descSpan.textContent = desc;
-                if (num) {
-                    descSpan.style.marginLeft = '0.5em';
-                }
-                preambleDiv.appendChild(descSpan);
-                preambleAdded = true;
-            }
-
-            if (preambleAdded) {
-                displayContainer.appendChild(preambleDiv);
-            }
-
-            igtContentRenderingLogic(src, gl, trans, displayContainer);
-        }
-
-        function igtContentRenderingLogic(sourceLine, glossLine, translationLine, containerElement) {
-            const sourceTokens = sourceLine.split(' ');
-            const glossTokens = glossLine.split(' ');
-
-            if (sourceTokens.length!== glossTokens.length) {
-                console.error("原語行とグロス行のトークン数が一致しません:", { source: sourceLine, gloss: glossLine });
-                const errorP = document.createElement('p');
-                errorP.className = 'igt-error-message';
-                errorP.textContent = "エラー：原語行とグロス行の単語/形態素数が一致しません。";
-                containerElement.appendChild(errorP);
-
-                const plainSource = document.createElement('p');
-                plainSource.className = 'source-lang-fallback';
-                plainSource.textContent = `原語: ${sourceLine}`;
-                containerElement.appendChild(plainSource);
-
-                const plainGloss = document.createElement('p');
-                plainGloss.className = 'gloss-abbr-fallback';
-                plainGloss.textContent = `グロス: ${glossLine}`;
-                containerElement.appendChild(plainGloss);
-
-                const plainTranslation = document.createElement('p');
-                plainTranslation.className = 'free-translation-fallback';
-                plainTranslation.textContent = `翻訳: ${translationLine}`;
-                containerElement.appendChild(plainTranslation);
-                return;
-            }
-
-            const igtContainer = document.createElement('div');
-            igtContainer.className = 'igt-flex-container'; // 罫線とイタリックはここで動的に制御
-
-            for (let i = 0; i < sourceTokens.length; i++) {
-                const wordStack = document.createElement('div');
-                wordStack.className = 'igt-word-stack';
-
-                const sourceDiv = document.createElement('div');
-                sourceDiv.className = 'source-lang-flex'; // イタリックはここで動的に制御
-                sourceDiv.textContent = sourceTokens[i];
-                wordStack.appendChild(sourceDiv);
-
-                const glossDiv = document.createElement('div');
-                glossDiv.className = 'gloss-abbr-flex';
-
-                const morphemes = glossTokens[i].split('-');
-                morphemes.forEach((morpheme, index) => {
-                    const morphemeSpan = document.createElement('span');
-                    morphemeSpan.textContent = morpheme;
-                    glossDiv.appendChild(morphemeSpan);
-                    if (index < morphemes.length - 1) {
-                        glossDiv.appendChild(document.createTextNode('-'));
-                    }
-                });
-                wordStack.appendChild(glossDiv);
-                igtContainer.appendChild(wordStack);
-            }
-
-            const translationDiv = document.createElement('div');
-            translationDiv.className = 'free-translation-flex'; // イタリックはここで動的に制御
-            translationDiv.textContent = translationLine;
-            igtContainer.appendChild(translationDiv);
-
-            containerElement.appendChild(igtContainer);
-        }
-
-        function escapeHtml(unsafe) {
-            if (typeof unsafe!== 'string') {
-                return '';
-            }
-            return unsafe
-              .replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/"/g, "&quot;")
-              .replace(/'/g, "&#039;");
-        }
     </script>
 </body>
 </html>
