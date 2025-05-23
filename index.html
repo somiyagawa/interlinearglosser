@@ -12,7 +12,6 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:creator" content="@somiyagawa">
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
         
@@ -197,8 +196,12 @@
         }
 
         .theme-icon {
-            font-size: 20px;
-            color: var(--text-accent);
+            font-size: 18px;
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+            text-align: center;
+            line-height: 20px;
         }
 
         /* Social share buttons */
@@ -223,7 +226,6 @@
             color: white;
             text-decoration: none;
             transition: all 0.3s ease;
-            font-size: 24px;
             position: relative;
             overflow: hidden;
         }
@@ -252,7 +254,7 @@
         }
 
         .social-share-button.twitter {
-            background: #1DA1F2;
+            background: #000000;
         }
 
         .social-share-button.facebook {
@@ -270,9 +272,53 @@
         .social-share-button span {
             position: relative;
             z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
         }
 
-        /* Mobile social share */
+        .social-share-button.facebook span {
+            font-size: 28px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+        }
+
+        .social-share-button.linkedin span {
+            font-size: 20px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            letter-spacing: -2px;
+        }
+
+        .social-share-button.twitter span {
+            font-family: 'Arial Black', sans-serif;
+            font-weight: 900;
+            font-size: 22px;
+        }
+
+        /* Tooltip styles */
+        .social-share-button[title] {
+            position: relative;
+        }
+
+        .social-share-button[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            white-space: nowrap;
+            z-index: 10;
+            font-weight: normal;
+        }
         @media (max-width: 768px) {
             .social-share {
                 position: static;
@@ -281,6 +327,10 @@
                 justify-content: center;
                 padding: 20px;
                 margin-top: 20px;
+            }
+
+            .social-share-button[title]:hover::after {
+                display: none;
             }
 
             .theme-toggle {
@@ -483,8 +533,7 @@
             margin: 0 0 0.5em 0;
             color: var(--text-accent);
             font-size: var(--font-size-small);
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
         }
 
         .author-name {
@@ -715,8 +764,7 @@
             font-family: inherit;
             position: relative;
             overflow: hidden;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             min-height: 56px;
         }
 
@@ -1034,9 +1082,8 @@
         .gloss-abbr-flex {
             color: #00d4ff;
             font-size: var(--font-size-base);
-            text-transform: uppercase;
             font-weight: 500;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
         body.light-mode .gloss-abbr-flex {
@@ -1148,8 +1195,7 @@
         .example-item strong {
             color: var(--text-accent);
             font-size: var(--font-size-small);
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
         /* Footer */
@@ -1215,6 +1261,19 @@
 
         @keyframes spin {
             to { transform: rotate(360deg); }
+        }
+
+        /* Visually hidden class for screen readers */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            white-space: nowrap;
+            border: 0;
         }
 
         /* Responsive design */
@@ -1316,25 +1375,25 @@
     <div class="theme-toggle">
         <input type="checkbox" id="theme-toggle-checkbox" class="theme-toggle-checkbox">
         <label for="theme-toggle-checkbox" class="theme-toggle-label">
-            <i class="fas fa-moon theme-icon"></i>
+            <span class="theme-icon">🌙</span>
             <div class="theme-toggle-switch"></div>
-            <i class="fas fa-sun theme-icon"></i>
+            <span class="theme-icon">☀️</span>
         </label>
     </div>
     
     <!-- Social Share Buttons -->
     <div class="social-share">
-        <a href="#" class="social-share-button twitter" aria-label="Share on X (Twitter)" id="share-twitter">
-            <span><i class="fab fa-x-twitter"></i></span>
+        <a href="#" class="social-share-button twitter" aria-label="Share on X (Twitter)" id="share-twitter" title="Share on X">
+            <span>X</span>
         </a>
-        <a href="#" class="social-share-button facebook" aria-label="Share on Facebook" id="share-facebook">
-            <span><i class="fab fa-facebook-f"></i></span>
+        <a href="#" class="social-share-button facebook" aria-label="Share on Facebook" id="share-facebook" title="Share on Facebook">
+            <span>f</span>
         </a>
-        <a href="#" class="social-share-button instagram" aria-label="Share on Instagram" id="share-instagram">
-            <span><i class="fab fa-instagram"></i></span>
+        <a href="#" class="social-share-button instagram" aria-label="Share on Instagram" id="share-instagram" title="Share on Instagram">
+            <span>◉</span>
         </a>
-        <a href="#" class="social-share-button linkedin" aria-label="Share on LinkedIn" id="share-linkedin">
-            <span><i class="fab fa-linkedin-in"></i></span>
+        <a href="#" class="social-share-button linkedin" aria-label="Share on LinkedIn" id="share-linkedin" title="Share on LinkedIn">
+            <span>in</span>
         </a>
     </div>
     
@@ -1551,20 +1610,14 @@
             const themeToggle = document.getElementById('theme-toggle-checkbox');
             const body = document.body;
             
-            // Check for saved theme preference or default to dark mode
-            const currentTheme = localStorage.getItem('theme') || 'dark';
-            if (currentTheme === 'light') {
-                body.classList.add('light-mode');
-                themeToggle.checked = true;
-            }
+            // Default to dark mode (no localStorage due to sandbox)
+            // User preference won't persist between sessions in sandboxed environment
             
             themeToggle.addEventListener('change', () => {
                 if (themeToggle.checked) {
                     body.classList.add('light-mode');
-                    localStorage.setItem('theme', 'light');
                 } else {
                     body.classList.remove('light-mode');
-                    localStorage.setItem('theme', 'dark');
                 }
             });
             
@@ -1580,9 +1633,15 @@
             // Instagram doesn't support direct sharing, so we'll copy the URL
             document.getElementById('share-instagram').addEventListener('click', (e) => {
                 e.preventDefault();
-                navigator.clipboard.writeText(window.location.href).then(() => {
-                    showSuccessMessage('Link copied! Share it on Instagram / リンクをコピーしました！');
-                });
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(window.location.href).then(() => {
+                        showSuccessMessage('Link copied! Share it on Instagram / リンクをコピーしました！');
+                    }).catch(() => {
+                        showSuccessMessage('Please copy the URL manually for Instagram / URLを手動でコピーしてください');
+                    });
+                } else {
+                    showSuccessMessage('Please copy the URL manually for Instagram / URLを手動でコピーしてください');
+                }
             });
             
             // Elements
@@ -2000,7 +2059,6 @@
         }
         
         .gloss-word {
-            font-variant: small-caps;
             font-size: 0.9em;
             color: #444;
         }
